@@ -82,7 +82,10 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
 
         if (fallbacked)
         {
-            if (hassig) fallbacked = false;
+            static double lastsilencetime = -1;
+            if (!hassig || lastsilencetime < 0) lastsilencetime = time;
+            else lastsigtime = time;
+            if (lastsigtime - lastsilencetime >= backtime) fallbacked = false;
             outleft[i] = inleftb ? inleftb[i] : 0;
             outright[i] = inrightb ? inrightb[i] : 0;
         }
