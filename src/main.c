@@ -8,14 +8,13 @@ const unsigned short dspmodule_requiredAPIversion = 3;
 
 static void *inleftporta, *inrightporta, *inleftportb, *inrightportb, *outleftport, *outrightport;
 static float threshold = 0;
-static double fallbacktime = 3, backtime = 2;
+static double fallbacktime = 3;
 
 unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * const argv[], const char **sysname, const char **dispname)
 {
     {
-        unsigned int tmp;
         int p;
-        while ((p = getopt(argc, argv, "t:f:b:")) != -1)
+        while ((p = getopt(argc, argv, "t:f:")) != -1)
         {
             switch (p)
             {
@@ -26,10 +25,6 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
 
                 case 'f':
                     if (sscanf(optarg, "%lf", &fallbacktime) < 1) goto parsedbloptfail;
-                    break;
-
-                case 'b':
-                    if (sscanf(optarg, "%lf", &backtime) < 1) goto parsedbloptfail;
                     break;
 
                 parsedbloptfail:
@@ -54,7 +49,7 @@ unsigned short dspmodule_startup(const DSPLoaderAPI *lapi, int argc, char * cons
     if (!(outrightport = lapi->addport("outright", NULL, DSPPortDirection_Output, 0)))
     { lapi->log(DSPLogLevel_Fatal, "failed creating output right channel"); return 1; }
 
-    lapi->log(DSPLogLevel_Info, "threshold: %f\nfallbacktime: %lf seconds\nbacktime: %lf seconds", threshold, fallbacktime, backtime);
+    lapi->log(DSPLogLevel_Info, "threshold: %f\nfallbacktime: %lf seconds", threshold, fallbacktime);
     *sysname = "dspsigselector";
     *dispname = "Signal Selector";
     return 0;
@@ -76,7 +71,6 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
     for (unsigned long i = 0; i < duration; i++)
     {
         double time = (position + i) / (double)rate;
-        static double lastsigtime = -1;
         static bool fallbacked = false;
         bool hassig = absf(inlefta ? inlefta[i] : 0) >= threshold && absf(inrighta ? inrighta[i] : 0) >= threshold;
 
@@ -88,6 +82,7 @@ unsigned short dspmodule_process(const DSPLoaderAPI *lapi, unsigned long long po
         }
         else
         {
+            static double lastsigtime = -1;
             if (lastsigtime < 0 || hassig) lastsigtime = time;
             else if (time - lastsigtime >= fallbacktime) fallbacked = true;
             outleft[i] = inlefta ? inlefta[i] : 0;
