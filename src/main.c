@@ -77,7 +77,6 @@ DSPModuleReturnCode dspmodule_process(const DSPLoaderAPI * restrict lapi, DSPMod
     for (unsigned long i = 0; i < opts->duration; i++)
     {
         double time = (opts->position + i) / (double)opts->rate;
-        static double lastsigtime = -1;
         static bool fallbacked = false;
         bool hassig = absf(inlefta ? inlefta[i] : 0) >= threshold && absf(inrighta ? inrighta[i] : 0) >= threshold;
 
